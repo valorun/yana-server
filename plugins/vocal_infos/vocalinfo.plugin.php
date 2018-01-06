@@ -260,118 +260,136 @@ function vocalinfo_action(){
 			$json = json_encode($response);
 			echo ($json=='[]'?'{}':$json);
 		break;
+			//MAJ pour la nouvelle API
 		case 'vocalinfo_meteo':
-			global $_;
-				if($conf->get('plugin_vocalinfo_woeid')!=''){
-				$contents = file_get_contents('http://weather.yahooapis.com/forecastrss?w='.$conf->get('plugin_vocalinfo_woeid').'&u=c');
-				$xml = simplexml_load_string($contents);
-				if(	(isset($_['today'])))
-				{
-					$weekdays = $xml->xpath('/rss/channel/item/yweather:condition');
-				}
-				else
-				{
-					$weekdays = $xml->xpath('/rss/channel/item/yweather:forecast');
-				}
-				//Codes disponibles ici: http://developer.yahoo.com/weather/#codes
-				$textTranslate = array(
-										'Showers'=>'des averses',										
-										'Tornado' => 'Attention: Tornade!',
-										'Hurricane' => 'Attention: Ouragan!',
-										'Severe thunderstorms' => 'Orages violents',
-										'Mixed rain and snow' => 'Pluie et neiges',
-										'Mixed rain and sleet' => 'Pluie et neige fondue',
-										'Mixed snow and sleet' => 'Neige et neige fondue',
-										'Freezing drizzle' => 'Bruine verglassant',
-										'Drizzle' => 'Bruine',
-										'Freezing rain' => 'Pluie verglassant',
-										'Showers' => 'Averse',
-										'Snow flurries' => 'Bourrasque de neige',
-										'Light snow showers' => 'Averse de neige lègére',
-										'Blowing snow' => 'Chasse neige',
-										'Snow' => 'Neige',
-										'Hail' => 'Grêle',
-										'Sleet' => 'Neige fondue',
-										'Dust' => 'Poussière',
-										'Foggy' => 'Brouillard',
-										'Smoky' => 'Fumée',
-										'Blustery' => 'Froid et venteux',
-										'Windy' => 'Venteux',
-										'Cold' => 'Froid',
-										'Cloudy' => 'Nuageux',
-										'Fair' => 'Ciel dégagé',
-										'Mixed rain and hail' => 'Pluie et grêle',
-										'Hot' => 'Chaud',
-										'Isolated thunderstorms' => 'Orages isolées',
-										'Scattered showers' => 'Averse éparse',
-										'Heavy snow' => 'Fortes chutes de neige',
-										'Scattered snow showers' => 'Averse de neige éparse',
-										'Thunderstorms' => 'Orages',
-										'Thundershowers' => 'Grain sous orage violents',
-										'Isolated thundershowers' => 'Grain sous orage isolées',
-										'Not available' => 'Non disponible',
-										'Scattered Thunderstorms' => 'Orages éparses',
-										'Partly Cloudy'=>'Partiellement nuageux',
-										'Mostly Sunny'=>'plutot ensoleillé',
-										'Mostly Cloudy'=>'plutot Nuageux',
-										'Light Rain'=>'Pluie fine',
-										'Clear'=>'Temps clair',
-										'Sunny'=>'ensoleillé',
-										'Rain/Wind'=>'Pluie et vent',
-										'Rain'=>'Pluie',
-										'Wind'=>'Vent',
-										'Partly Cloudy/Wind'=>'Partiellement nuageux avec du vent'
-										);
-				$dayTranslate = array('Wed'=>'mercredi',
-										'Sat'=>'samedi',
-										'Mon'=>'lundi',
-										'Tue'=>'mardi',
-										'Thu'=>'jeudi',
-										'Fri'=>'vendredi',
-										'Sun'=>'dimanche');
-				$affirmation = '';
+                        global $_;
+                                if($conf->get('plugin_vocalinfo_woeid')!=''){
+                                $BASE_URL = "http://query.yahooapis.com/v1/public/yql";
+                                if((isset($_['today'])))
+                                {
+                                        $yql_query = 'select item.condition from weather.forecast where woeid='.$conf->get('plugin_vocalinfo_woeid').' and u=\'c\'';
+                                }
+                                else
+                                {
+                                        $yql_query = 'select item.forecast from weather.forecast where woeid='.$conf->get('plugin_vocalinfo_woeid').' and u=\'c\'';
+                                }
+                                $yql_query_url = $BASE_URL . "?q=" . urlencode($yql_query) . "&format=json";
 
-				foreach($weekdays as $day){
+                                $result =file_get_contents($yql_query_url);
+                                $json=json_decode($result);
 
-					if (substr($day['text'],0,2) == "AM")
-					{
-						$sub_condition = substr($day['text'],3);
-						$condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." dans la matinée";
+                                if((isset($_['today'])))
+                                {
+                                        $weekdays=$json->{'query'}->{'results'}->{'channel'}->{'item'};
+                                }
+                                else
+                                {
+                                        $weekdays=$json->{'query'}->{'results'}->{'channel'};
+                                }
+                                //Codes disponibles ici: http://developer.yahoo.com/weather/#codes
+                                $textTranslate = array(
+                                                                                '1' => 'Attention: Tornade!',
+                                                                                '2' => 'Attention: Ouragan!',
+                                                                                '3' => 'Tempètes violentes',
+                                                                                '4' => 'Tempêtes',
+                                                                                '5' => 'Pluie et neiges',
+                                                                                '6' => 'Pluie et neige fondue',
+                                                                                '7' => 'Neige et neige fondue',
+                                                                                '8' => 'Bruine verglassant',
+                                                                                '9' => 'Bruine',
+                                                                                '10' => 'Pluie verglassant',
+																				'11' => 'des averses',
+                                                                                '12' => 'Averse',
+                                                                                '13' => 'Bourrasque de neige',
+                                                                                '14' => 'Averse de neige lègére',
+                                                                                '15' => 'Chasse neige',
+                                                                                '16' => 'Neige',
+                                                                                '17' => 'Grêle',
+                                                                                '18' => 'Neige fondue',
+                                                                                '19' => 'Poussière',
+                                                                                '20' => 'Brouillard',
+                                                                                '21' => 'Brume',
+                                                                                '22' => 'Fumée',
+                                                                                '23' => 'Froid et venteux',
+                                                                                '24' => 'Venteux',
+                                                                                '25' => 'Froid',
+                                                                                '26' => 'Nuageux',
+                                                                                '27' => 'plutot Nuageux',
+                                                                                '28' => 'plutot Nuageux',
+                                                                                '29' => 'Partiellement nuageux',
+                                                                                '30' => 'Partiellement nuageux',
+                                                                                '31' => 'Temps clair',
+                                                                                '32' => 'ensoleillé',
+                                                                                '33' => 'Ciel dégagé',
+                                                                                '34' => 'Ciel dégagé',
+                                                                                '35' => 'Pluie et grêle',
+                                                                                '36' => 'Chaud',
+                                                                                '37' => 'Orages isolées',
+                                                                                '38' => 'Orages épars',
+                                                                                '39' => 'Orages épars',
+                                                                                '40' => 'Averses éparses',
+																				'41' => 'Fortes chutes de neige',
+                                                                                '42' => 'Averse de neige éparse',
+                                                                                '43' => 'Fortes neiges',
+                                                                                '44' => 'Partiellement nuageux avec du vent',
+                                                                                '45' => 'Orages',
+                                                                                '46' => 'Tempêtes de neige',
+                                                                                '47' => 'Grain sous orage isolées',
+                                                                                '3200' => 'Non disponible'
+                                                                                );
+                                $dayTranslate = array('Wed'=>'mercredi',
+                                                                                'Sat'=>'samedi',
+                                                                                'Mon'=>'lundi',
+                                                                                'Tue'=>'mardi',
+                                                                                'Thu'=>'jeudi',
+                                                                                'Fri'=>'vendredi',
+                                                                                'Sun'=>'dimanche');
+                                $affirmation = '';
 
-					}
-					elseif (substr($day['text'],0,2) == "PM") {
-						$sub_condition = substr($day['text'],3);
-						$condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." dans l'après midi";
-					 } 
-					 elseif (substr($day['text'],-4) == "Late") {
-					 	$sub_condition = substr($day['text'],0,-5);
-					 	$condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." en fin de journée";
-					 }
-					 else
-					 {
-					 	$condition = isset($textTranslate[''.$day['text']])?$textTranslate[''.$day['text']]:$day['text'];
-					 }
-					
+                                foreach($weekdays as $day){
+                                        if(!(isset($_['today']))){
+                                                $day=$day->{'item'}->{'forecast'};
+                                        }
+                                        if (substr($day->{'date'},-6,2) == "AM")
+                                        {
+                                                $sub_condition = $day->{'code'};
+                                                $condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." dans la matinée";
+                                        }
+										elseif (substr($day->{'date'},-6,2) == "PM") {
+                                                $sub_condition = $day->{'code'};
+                                                $condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." dans l'après midi";
+                                         }
+                                         elseif (substr($day->{'date'},-6,4) == "Late") {
+                                                $sub_condition = $day->{'code'};
+                                                $condition = (isset($textTranslate[''.$sub_condition])?$textTranslate[''.$sub_condition]:$sub_condition)." en fin de journée";
+                                         }
+                                         else
+                                         {
+                                                $condition = isset($textTranslate[''.$day->{'code'}])?$textTranslate[''.$day->{'code'}]:$day->{'code'};
+                                         }
 
-					if(	(isset($_['today'])))
-					{
-						$affirmation .= 'Aujourd\'hui '.$day['temp'].' degrés, '.$condition.', ';
-					}
-					else
-					{
-						$affirmation .= $dayTranslate[''.$day['day']].' de '.$day['low'].' à '.$day['high'].' degrés, '.$condition.', ';
-					}
-				}
-			}else{
-				$affirmation = 'Vous devez renseigner votre ville dans les préférences de l\'interface oueb, je ne peux rien vous dire pour le moment.';
-			}
 
-				$response = array('responses'=>array(
-										array('type'=>'talk','sentence'=>$affirmation)
-													)
-								);
-				$json = json_encode($response);
-				echo ($json=='[]'?'{}':$json);
+                                        if((isset($_['today'])))
+                                        {
+                                                $affirmation .= 'Aujourd\'hui '.$day->{'temp'}.' degrés, '.$condition.', ';
+                                        }
+                                        else
+                                        {
+                                                $affirmation .= $dayTranslate[''.substr($day->{'day'},0,3)].' de '.$day->{'low'}.' à '.$day->{'high'}.' degrés, '.$condition.', ';
+                                        }
+                                }
+                        }else{
+                                $affirmation = 'Vous devez renseigner votre ville dans les préférences de l\'interface oueb, je ne peux rien vous dire pour le moment.';
+                        }
+
+                                $response = array('responses'=>array(
+                                                                                array('type'=>'talk','sentence'=>$affirmation)
+                                                                                                        )
+                                                                );
+                                $json = json_encode($response);
+                                echo ($json=='[]'?'{}':$json);
+
+
 		break;
 
 		case 'vocalinfo_tv':
